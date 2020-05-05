@@ -1,9 +1,9 @@
 package com.challenge.microservicechallenge.service.create;
 
 import com.challenge.microservicechallenge.exception.ValidationException;
-import com.challenge.microservicechallenge.model.Transaction;
 import com.challenge.microservicechallenge.persistence.entitiy.MoneyMovement;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
+import com.challenge.microservicechallenge.service.model.Transaction;
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;

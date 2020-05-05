@@ -1,72 +1,88 @@
 package com.challenge.microservicechallenge.web;
 
-import com.challenge.microservicechallenge.model.Channels;
-import com.challenge.microservicechallenge.model.Transaction;
-import com.challenge.microservicechallenge.model.TransactionStatus;
-import com.challenge.microservicechallenge.service.create.CreateTransactionService;
-import com.challenge.microservicechallenge.service.search.SearchTransactionService;
-import com.challenge.microservicechallenge.service.status.TransactionStatusService;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import com.challenge.microservicechallenge.exception.ConflictException;
+import com.challenge.microservicechallenge.service.api.CreateTransactionService;
+import com.challenge.microservicechallenge.service.api.SearchTransactionService;
+import com.challenge.microservicechallenge.web.hateoas.TransactionModelAssembler;
+import com.challenge.microservicechallenge.web.hateoas.TransactionStatusModelAssembler;
+import com.challenge.microservicechallenge.web.mapper.TransactionMapper;
+import com.challenge.microservicechallenge.web.model.TransactionDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/transactions")
+@Tag(name = "Transactions", description = "the Transactions API")
 public class TransactionController {
 
     private final CreateTransactionService createTransactionService;
     private final SearchTransactionService searchTransactionService;
-    private final TransactionStatusService transactionStatusService;
+    private final TransactionModelAssembler transactionModelAssembler;
 
     @Autowired
     public TransactionController(CreateTransactionService createTransactionService,
                                  SearchTransactionService searchTransactionService,
-                                 TransactionStatusService transactionStatusService) {
+                                 TransactionModelAssembler transactionModelAssembler,
+                                 TransactionStatusModelAssembler transactionStatusModelAssembler) {
         this.createTransactionService = createTransactionService;
         this.searchTransactionService = searchTransactionService;
-        this.transactionStatusService = transactionStatusService;
+        this.transactionModelAssembler = transactionModelAssembler;
     }
 
     @PostMapping
-    @ApiOperation(value = "Create transaction", notes = "Create a transaction")
+    @Operation(summary = "Create transaction", description = "Create a transaction")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Successful creation of a transaction"),
-            @ApiResponse(code = 400, message = "Transaction not valid"),
-            @ApiResponse(code = 409, message = "Conflict in transaction creation")
+            @ApiResponse(responseCode  = "201", description  = "Successful creation of a transaction"),
+            @ApiResponse(responseCode  = "400", description  = "Transaction not valid"),
+            @ApiResponse(responseCode  = "409", description  = "Conflict in transaction creation")
     })
-    @ResponseStatus(HttpStatus.CREATED)
-    public Transaction create(@Valid @RequestBody Transaction in) {
-
-        return createTransactionService.create(in);
+    //@ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<EntityModel<TransactionDto>> create(@Valid @RequestBody TransactionDto in) {
+        return Stream.of(in)
+                .map(TransactionMapper.INSTANCE::transactionDtoToTransaction)
+                .map(createTransactionService::create)
+                .map(TransactionMapper.INSTANCE::transactionToTransactionDto)
+                .map(transactionModelAssembler::toModel)
+                .map(entityModel -> ResponseEntity
+                        .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel))
+                .findFirst()
+                .orElseThrow(() -> new ConflictException("Error in Transaction creation"));
     }
 
     @GetMapping
-    @ApiOperation(value = "Search transactions", notes = "Returns transactions by Iban. Optional ordered by amount")
+    @Operation(summary = "Search transaction", description = "Returns transactions by Iban. Optional ordered by amount")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List of transactions")
+            @ApiResponse(responseCode = "200", description = "List of transactions"),
+            @ApiResponse(responseCode = "204", description = "No transactions")
     })
-    @ResponseStatus(HttpStatus.OK)
-    public List<Transaction> search(@RequestParam(value="accountIban") Optional<String> accountIban,
-                                    @RequestParam(value="orderAmountAsc") Optional<Boolean> orderAmountAsc) {
-        return searchTransactionService.search(accountIban, orderAmountAsc);
-    }
+    //@ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<CollectionModel<EntityModel<TransactionDto>>> search(@RequestParam(value="accountIban") Optional<String> accountIban,
+                                                                               @RequestParam(value="orderAmountAsc") Optional<Boolean> orderAmountAsc) {
+        List<TransactionDto> dtos = searchTransactionService.search(accountIban, orderAmountAsc)
+                .stream()
+                .map(TransactionMapper.INSTANCE::transactionToTransactionDto)
+                .collect(Collectors.toList());
 
-    @GetMapping("/{reference}")
-    @ApiOperation(value = "Get one transaction by reference and channel",
-            notes = "Returns one transaction status by reference. Optional channel: CLIENT, ATM, INTERNAL. Default value CLIENT")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Exists this transaction")
-    })
-    @ResponseStatus(HttpStatus.OK)
-    public TransactionStatus status(@PathVariable String reference, @RequestParam(value="channel")  Optional<Channels> channel) {
-        return transactionStatusService.getStatus(reference, channel);
+        ResponseEntity<CollectionModel<EntityModel<TransactionDto>>> response = ResponseEntity.noContent().build();
+        if(!dtos.isEmpty()) {
+            CollectionModel<EntityModel<TransactionDto>> entities = transactionModelAssembler.toCollectionModel(dtos);
+            response = ResponseEntity.ok().body(entities);
+        }
+        return response;
     }
 
 }

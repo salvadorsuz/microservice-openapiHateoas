@@ -2,9 +2,9 @@ package com.challenge.microservicechallenge.service.create;
 
 import com.challenge.microservicechallenge.exception.ValidationException;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
-import com.challenge.microservicechallenge.common.AmountFeeCalculator;
-import com.challenge.microservicechallenge.common.Validator;
-import com.challenge.microservicechallenge.model.Transaction;
+import com.challenge.microservicechallenge.service.common.AmountFeeCalculator;
+import com.challenge.microservicechallenge.service.common.Validator;
+import com.challenge.microservicechallenge.service.model.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

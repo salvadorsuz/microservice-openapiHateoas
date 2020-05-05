@@ -1,12 +1,11 @@
 package com.challenge.microservicechallenge.service.create;
 
 import com.challenge.microservicechallenge.exception.ValidationException;
-import com.challenge.microservicechallenge.model.Transaction;
-import com.challenge.microservicechallenge.model.converter.MoneyMovementToTransactionConverter;
-import com.challenge.microservicechallenge.model.converter.TransactionToMoneyMovementConverter;
 import com.challenge.microservicechallenge.persistence.entitiy.MoneyMovement;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
-import org.aspectj.lang.annotation.Before;
+import com.challenge.microservicechallenge.service.converter.MoneyMovementToTransactionConverter;
+import com.challenge.microservicechallenge.service.converter.TransactionToMoneyMovementConverter;
+import com.challenge.microservicechallenge.service.model.Transaction;
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,7 +29,7 @@ class CreateTransactionServiceTest {
     private final String REFERENCE= "AAA-111";
 
     @InjectMocks
-    private CreateTransactionService service;
+    private DefaultCreateTransactionService service;
 
     @Mock
     private MoneyMovementRepository repository;

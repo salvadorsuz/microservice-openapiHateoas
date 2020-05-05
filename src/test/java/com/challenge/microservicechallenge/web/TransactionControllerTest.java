@@ -2,15 +2,12 @@ package com.challenge.microservicechallenge.web;
 
 import com.challenge.microservicechallenge.exception.ConflictException;
 import com.challenge.microservicechallenge.exception.ValidationException;
-import com.challenge.microservicechallenge.model.Channels;
-import com.challenge.microservicechallenge.model.Status;
-import com.challenge.microservicechallenge.model.Transaction;
-import com.challenge.microservicechallenge.model.TransactionStatus;
-import com.challenge.microservicechallenge.service.create.CreateTransactionService;
-import com.challenge.microservicechallenge.service.search.SearchTransactionService;
-import com.challenge.microservicechallenge.service.status.TransactionStatusService;
+import com.challenge.microservicechallenge.service.model.Transaction;
+import com.challenge.microservicechallenge.web.model.TransactionDto;
+import com.challenge.microservicechallenge.service.create.DefaultCreateTransactionService;
+import com.challenge.microservicechallenge.service.search.DefaultSearchTransactionService;
 import com.challenge.microservicechallenge.utils.TestUtils;
-import org.hamcrest.Matchers;
+import com.challenge.microservicechallenge.web.hateoas.TransactionModelAssembler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -28,13 +28,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Mockito.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @DisplayName("TransactionController tests ")
@@ -50,15 +52,21 @@ class TransactionControllerTest {
     private TransactionController transactionController;
 
     @Mock
-    private CreateTransactionService createTransactionService;
+    private DefaultCreateTransactionService createTransactionService;
 
     @Mock
-    private SearchTransactionService searchTransactionService;
+    private DefaultSearchTransactionService searchTransactionService;
 
     @Mock
-    private TransactionStatusService transactionStatusService;
+    private TransactionModelAssembler transactionModelAssembler;
+
+    private TransactionDto transactionDto;
 
     private Transaction transaction;
+
+    private EntityModel<TransactionDto> transactionEntityModel;
+
+    private CollectionModel<EntityModel<TransactionDto>> transactionsEntityModel;
 
     @BeforeEach
     public void init() {
@@ -68,7 +76,16 @@ class TransactionControllerTest {
                 .setControllerAdvice(new CustomizedResponseEntityExceptionHandler())
                 .build();
 
+        transactionDto = TransactionDto.builder().accountIban(IBAN).amount(AMOUNT).reference(REFERENCE).build();
+
         transaction = Transaction.builder().accountIban(IBAN).amount(AMOUNT).reference(REFERENCE).build();
+
+        transactionEntityModel =  new EntityModel<>(transactionDto,
+                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), Optional.empty()))
+                    .withSelfRel());
+
+        transactionsEntityModel = new CollectionModel<>(Collections.singleton(transactionEntityModel),
+                linkTo(methodOn(TransactionController.class).search(Optional.ofNullable(IBAN), Optional.empty())).withSelfRel());
     }
 
     @Nested
@@ -80,6 +97,7 @@ class TransactionControllerTest {
         public void givenValidTransactionThenCreate() throws Exception  {
             //given
             when(createTransactionService.create(any(Transaction.class))).thenReturn(transaction);
+            when(transactionModelAssembler.toModel(any(TransactionDto.class))).thenReturn(transactionEntityModel);
 
             //when
             final ResultActions result = mockMvc.perform(
@@ -92,9 +110,16 @@ class TransactionControllerTest {
             verify(createTransactionService, times(1)).create(any(Transaction.class));
 
             result.andExpect(status().isCreated());
-            result.andExpect(jsonPath("$.accountIban").value(transaction.getAccountIban()));
-            result.andExpect(jsonPath("$.reference").value(transaction.getReference()));
-            result.andExpect(jsonPath("$.amount").value(transaction.getAmount()));
+            result.andExpect(jsonPath("$.accountIban").value(transactionDto.getAccountIban()));
+            result.andExpect(jsonPath("$.reference").value(transactionDto.getReference()));
+            result.andExpect(jsonPath("$.amount").value(transactionDto.getAmount()));
+
+            result.andExpect(header().exists("location"));
+            result.andExpect(header().string("location", containsString("transactions/"+REFERENCE+"/status")));
+
+            result.andExpect(jsonPath("$.links").isNotEmpty());
+            result.andExpect(jsonPath("$.links[*].rel", containsInAnyOrder(IanaLinkRelations.SELF.toString())));
+
         }
 
         @Test
@@ -151,6 +176,7 @@ class TransactionControllerTest {
             //given
             List<Transaction> transactions = Collections.singletonList(transaction);
             when(searchTransactionService.search(Optional.empty(), Optional.empty())).thenReturn(transactions);
+            when(transactionModelAssembler.toCollectionModel(any(Iterable.class))).thenReturn(transactionsEntityModel);
 
             //when
             final ResultActions result = mockMvc.perform(
@@ -162,10 +188,14 @@ class TransactionControllerTest {
             verify(searchTransactionService, times(1)).search(Optional.empty(), Optional.empty());
 
             result.andExpect(status().isOk());
-            result.andExpect(jsonPath("$.length()").value(transactions.size()));
-            result.andExpect(jsonPath("$[*].accountIban", containsInAnyOrder(transaction.getAccountIban())));
-            result.andExpect(jsonPath("$[*].reference", containsInAnyOrder(transaction.getReference())));
-            result.andExpect(jsonPath("$[*].amount", containsInAnyOrder(transaction.getAmount())));
+            result.andExpect(jsonPath("$.content.length()").value(transactions.size()));
+            result.andExpect(jsonPath("$.content[*].accountIban", containsInAnyOrder(transactionDto.getAccountIban())));
+            result.andExpect(jsonPath("$.content[*].reference", containsInAnyOrder(transactionDto.getReference())));
+            result.andExpect(jsonPath("$.content[*].amount", containsInAnyOrder(transactionDto.getAmount())));
+
+            result.andExpect(jsonPath("$.links").isNotEmpty());
+            result.andExpect(jsonPath("$.links[*].rel", containsInAnyOrder(IanaLinkRelations.SELF.toString())));
+
         }
 
         @Test
@@ -174,6 +204,7 @@ class TransactionControllerTest {
             //given
             List<Transaction> transactions = Collections.singletonList(transaction);
             when(searchTransactionService.search(Optional.of(IBAN), Optional.of(Boolean.TRUE))).thenReturn(transactions);
+            when(transactionModelAssembler.toCollectionModel(any(Iterable.class))).thenReturn(transactionsEntityModel);
 
             //when
             final ResultActions result = mockMvc.perform(
@@ -187,66 +218,34 @@ class TransactionControllerTest {
             verify(searchTransactionService, times(1)).search(Optional.of(IBAN), Optional.of(Boolean.TRUE));
 
             result.andExpect(status().isOk());
-            result.andExpect(jsonPath("$.length()").value(transactions.size()));
-            result.andExpect(jsonPath("$[*].accountIban", containsInAnyOrder(transaction.getAccountIban())));
-            result.andExpect(jsonPath("$[*].reference", containsInAnyOrder(transaction.getReference())));
-            result.andExpect(jsonPath("$[*].amount", containsInAnyOrder(transaction.getAmount())));
+            result.andExpect(jsonPath("$.content.length()").value(transactions.size()));
+            result.andExpect(jsonPath("$.content[*].accountIban", containsInAnyOrder(transactionDto.getAccountIban())));
+            result.andExpect(jsonPath("$.content[*].reference", containsInAnyOrder(transactionDto.getReference())));
+            result.andExpect(jsonPath("$.content[*].amount", containsInAnyOrder(transactionDto.getAmount())));
+
+            result.andExpect(jsonPath("$.links").isNotEmpty());
+            result.andExpect(jsonPath("$.links[*].rel", containsInAnyOrder(IanaLinkRelations.SELF.toString())));
         }
 
-
-    }
-
-    @Nested
-    @DisplayName("Test plan Status Transaction")
-    class WhenStatusTransaction {
-
         @Test
-        @DisplayName("Status transaction with valid reference and NO channel")
-        public void givenNoChannelThenReturnValidStatus() throws Exception {
+        @DisplayName("Search NO transaction with iban and order")
+        public void givenIbanOrderThenNoTransactions() throws Exception {
             //given
-            TransactionStatus transactionStatus =
-                    TransactionStatus.builder().reference(REFERENCE).status(Status.PENDING).build();
-
-            when(transactionStatusService.getStatus(REFERENCE, Optional.empty() )).thenReturn(transactionStatus);
+            when(searchTransactionService.search(Optional.of(IBAN), Optional.of(Boolean.TRUE))).thenReturn(Collections.EMPTY_LIST);
 
             //when
             final ResultActions result = mockMvc.perform(
-                    get("/transactions/{reference}", REFERENCE)
+                    get("/transactions")
+                            .param("accountIban", IBAN)
+                            .param("orderAmountAsc", "true")
                             .accept(MediaType.APPLICATION_JSON))
                     .andDo(print());
 
             //then
-            verify(transactionStatusService, times(1)).getStatus(REFERENCE, Optional.empty());
+            verify(searchTransactionService, times(1)).search(Optional.of(IBAN), Optional.of(Boolean.TRUE));
 
-            result.andExpect(status().isOk());
-            result.andExpect(jsonPath("$.reference").value(REFERENCE));
-            result.andExpect(jsonPath("$.status").value(Status.PENDING.toString()));
+            result.andExpect(status().isNoContent());
         }
-
-        @Test
-        @DisplayName("Status transaction with valid reference and CLIENT channel")
-        public void givenValidChannelThenReturnValidStatus() throws Exception {
-            //given
-            TransactionStatus transactionStatus =
-                    TransactionStatus.builder().reference(REFERENCE).status(Status.PENDING).build();
-
-            when(transactionStatusService.getStatus(REFERENCE, Optional.of(Channels.CLIENT))).thenReturn(transactionStatus);
-
-            //when
-            final ResultActions result = mockMvc.perform(
-                    get("/transactions/{reference}", REFERENCE)
-                            .param("channel", Channels.CLIENT.toString())
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andDo(print());
-
-            //then
-            verify(transactionStatusService, times(1)).getStatus(REFERENCE, Optional.of(Channels.CLIENT));
-
-            result.andExpect(status().isOk());
-            result.andExpect(jsonPath("$.reference").value(REFERENCE));
-            result.andExpect(jsonPath("$.status").value(Status.PENDING.toString()));
-        }
-
     }
 
 }

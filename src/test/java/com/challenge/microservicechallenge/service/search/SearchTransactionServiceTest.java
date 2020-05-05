@@ -1,9 +1,9 @@
 package com.challenge.microservicechallenge.service.search;
 
-import com.challenge.microservicechallenge.model.Transaction;
-import com.challenge.microservicechallenge.model.converter.MoneyMovementToTransactionConverter;
 import com.challenge.microservicechallenge.persistence.entitiy.MoneyMovement;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
+import com.challenge.microservicechallenge.service.converter.MoneyMovementToTransactionConverter;
+import com.challenge.microservicechallenge.service.model.Transaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,7 +31,7 @@ class SearchTransactionServiceTest {
     private final String REFERENCE= "AAA-111";
 
     @InjectMocks
-    private SearchTransactionService searchTransactionService;
+    private DefaultSearchTransactionService searchTransactionService;
 
     @Mock
     private MoneyMovementRepository repository;

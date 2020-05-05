@@ -1,13 +1,13 @@
 package com.challenge.microservicechallenge.service.status;
 
-import com.challenge.microservicechallenge.model.Channels;
-import com.challenge.microservicechallenge.model.Status;
-import com.challenge.microservicechallenge.model.TransactionStatus;
-import com.challenge.microservicechallenge.model.converter.MoneyMovementToTransactionStatusATMConverter;
-import com.challenge.microservicechallenge.model.converter.MoneyMovementToTransactionStatusClientConverter;
-import com.challenge.microservicechallenge.model.converter.MoneyMovementToTransactionStatusInternalConverter;
 import com.challenge.microservicechallenge.persistence.entitiy.MoneyMovement;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
+import com.challenge.microservicechallenge.service.converter.MoneyMovementToTransactionStatusATMConverter;
+import com.challenge.microservicechallenge.service.converter.MoneyMovementToTransactionStatusClientConverter;
+import com.challenge.microservicechallenge.service.converter.MoneyMovementToTransactionStatusInternalConverter;
+import com.challenge.microservicechallenge.service.model.Channels;
+import com.challenge.microservicechallenge.service.model.Status;
+import com.challenge.microservicechallenge.service.model.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 @SpringBootTest
 @DisplayName("TransactionStatusService tests ")
@@ -33,7 +32,7 @@ class TransactionStatusServiceTest {
     private final String REFERENCE= "AAA-111";
 
     @InjectMocks
-    private TransactionStatusService transactionStatusService;
+    private DefaultTransactionStatusService transactionStatusService;
 
     @Mock
     private MoneyMovementRepository repository;

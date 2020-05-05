@@ -1,8 +1,5 @@
 package com.challenge.microservicechallenge.persistence.entitiy;
 
-import com.challenge.microservicechallenge.model.Status;
-import com.challenge.microservicechallenge.model.TransactionStatus;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;

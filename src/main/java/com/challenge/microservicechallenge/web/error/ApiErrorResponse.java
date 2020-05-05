@@ -1,6 +1,5 @@
 package com.challenge.microservicechallenge.web.error;
 
-import lombok.Generated;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;

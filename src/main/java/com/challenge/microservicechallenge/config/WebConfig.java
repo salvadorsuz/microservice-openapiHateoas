@@ -1,7 +1,7 @@
 package com.challenge.microservicechallenge.config;
 
 
-import com.challenge.microservicechallenge.common.StringToChannelsEnum;
+import com.challenge.microservicechallenge.web.StringToChannelsEnum;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
