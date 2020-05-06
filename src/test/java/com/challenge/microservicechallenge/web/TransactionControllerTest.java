@@ -81,7 +81,7 @@ class TransactionControllerTest {
         transaction = Transaction.builder().accountIban(IBAN).amount(AMOUNT).reference(REFERENCE).build();
 
         transactionEntityModel =  new EntityModel<>(transactionDto,
-                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), Optional.empty()))
+                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), null))
                     .withSelfRel());
 
         transactionsEntityModel = new CollectionModel<>(Collections.singleton(transactionEntityModel),

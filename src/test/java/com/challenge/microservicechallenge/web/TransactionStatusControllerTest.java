@@ -74,7 +74,7 @@ class TransactionStatusControllerTest {
                     TransactionStatus.builder().reference(REFERENCE).status(Status.PENDING).build();
 
             EntityModel<TransactionStatusDto> transactionStatusEntityModel =  new EntityModel<>(transactionStatusDto,
-                    linkTo(methodOn(TransactionStatusController.class).status(transactionStatusDto.getReference(), Optional.empty()))
+                    linkTo(methodOn(TransactionStatusController.class).status(transactionStatusDto.getReference(), null))
                             .withSelfRel());
 
             when(transactionStatusService.getStatus(REFERENCE, Optional.empty() )).thenReturn(transactionStatus);
@@ -108,7 +108,7 @@ class TransactionStatusControllerTest {
                     TransactionStatus.builder().reference(REFERENCE).status(Status.PENDING).build();
 
             EntityModel<TransactionStatusDto> transactionStatusEntityModel =  new EntityModel<>(transactionStatusDto,
-                    linkTo(methodOn(TransactionStatusController.class).status(transactionStatusDto.getReference(), Optional.empty()))
+                    linkTo(methodOn(TransactionStatusController.class).status(transactionStatusDto.getReference(), null))
                             .withSelfRel());
             when(transactionStatusService.getStatus(REFERENCE, Optional.of(Channels.CLIENT))).thenReturn(transactionStatus);
             when(transactionStatusModelAssembler.toModel(any(TransactionStatusDto.class))).thenReturn(transactionStatusEntityModel);

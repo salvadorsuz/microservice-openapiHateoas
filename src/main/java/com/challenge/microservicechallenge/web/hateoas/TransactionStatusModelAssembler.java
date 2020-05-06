@@ -16,7 +16,7 @@ public class TransactionStatusModelAssembler implements RepresentationModelAssem
     @Override
     public EntityModel<TransactionStatusDto> toModel(TransactionStatusDto entity) {
         return new EntityModel<>(entity,
-                linkTo(methodOn(TransactionStatusController.class).status(entity.getReference(), Optional.empty()))
+                linkTo(methodOn(TransactionStatusController.class).status(entity.getReference(), null))
                         .withSelfRel());
     }
 }

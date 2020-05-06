@@ -26,9 +26,9 @@ public class TransactionModelAssembler implements RepresentationModelAssembler<T
     @Override
     public EntityModel<TransactionDto> toModel(TransactionDto transaction) {
         return new EntityModel<>(transaction,
-                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), Optional.empty()))
+                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), null))
                         .withSelfRel(),
-                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), Optional.empty()))
+                linkTo(methodOn(TransactionStatusController.class).status(transaction.getReference(), null))
                         .withRel(REL_STATUS),
                 linkTo(methodOn(TransactionController.class).search(Optional.of(transaction.getAccountIban()), Optional.empty()))
                         .withRel(REL_TRANSACTIONS));

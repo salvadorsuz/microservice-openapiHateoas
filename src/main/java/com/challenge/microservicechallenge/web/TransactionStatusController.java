@@ -1,15 +1,14 @@
 package com.challenge.microservicechallenge.web;
 
 import com.challenge.microservicechallenge.exception.ConflictException;
+import com.challenge.microservicechallenge.service.api.TransactionStatusService;
 import com.challenge.microservicechallenge.service.model.Channels;
 import com.challenge.microservicechallenge.service.model.TransactionStatus;
+import com.challenge.microservicechallenge.web.hateoas.TransactionStatusModelAssembler;
 import com.challenge.microservicechallenge.web.mapper.ChannelsMapper;
-import com.challenge.microservicechallenge.web.mapper.TransactionMapper;
 import com.challenge.microservicechallenge.web.mapper.TransactionStatusMapper;
 import com.challenge.microservicechallenge.web.model.ChannelsDto;
 import com.challenge.microservicechallenge.web.model.TransactionStatusDto;
-import com.challenge.microservicechallenge.service.api.TransactionStatusService;
-import com.challenge.microservicechallenge.web.hateoas.TransactionStatusModelAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -47,9 +46,9 @@ public class TransactionStatusController {
     })
     //@ResponseStatus(HttpStatus.OK)
     public ResponseEntity<EntityModel<TransactionStatusDto>> status(@PathVariable("reference") String reference,
-                                                                    @RequestParam(value="channel")  Optional<ChannelsDto> channel) {
+                                                                    @RequestParam(value="channel", required=false)ChannelsDto channel) {
 
-        Optional<Channels> ch = channel.map(ChannelsMapper.INSTANCE::channelsDtoToChannels);
+        Optional<Channels> ch = Optional.ofNullable(channel).map(ChannelsMapper.INSTANCE::channelsDtoToChannels);
         TransactionStatus transactionStatus =  transactionStatusService.getStatus(reference, ch);
 
         return Stream.of(transactionStatus)
