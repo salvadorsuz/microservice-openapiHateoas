@@ -14,7 +14,7 @@ public class MoneyMovementToTransactionConverter implements Converter<MoneyMovem
     public Transaction convert(MoneyMovement in) {
         Transaction out = null;
         if(nonNull(in)){
-            return Transaction.builder()
+            out = Transaction.builder()
                     .reference(in.getReference())
                     .accountIban(in.getIban())
                     .date(in.getDate())
