@@ -18,7 +18,7 @@ public class TransactionToMoneyMovementConverter implements Converter<Transactio
     public MoneyMovement convert(Transaction in) {
         MoneyMovement out = null;
         if(nonNull(in)) {
-            return MoneyMovement.builder()
+            out = MoneyMovement.builder()
                     .reference(defaultIfNull(in.getReference(), UUID.randomUUID().toString()))
                     .iban(in.getAccountIban())
                     .description(in.getDescription())

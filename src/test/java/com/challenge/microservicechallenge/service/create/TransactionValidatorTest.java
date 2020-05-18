@@ -5,9 +5,15 @@ import com.challenge.microservicechallenge.persistence.entitiy.MoneyMovement;
 import com.challenge.microservicechallenge.persistence.respository.MoneyMovementRepository;
 import com.challenge.microservicechallenge.service.model.Transaction;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.*;
 
 
-@SpringBootTest
+//@SpringBootTest
+@ExtendWith(MockitoExtension.class)
+//@ExtendWith(SpringExtension.class)
 @DisplayName("TransactionValidator tests ")
 class TransactionValidatorTest {
 
