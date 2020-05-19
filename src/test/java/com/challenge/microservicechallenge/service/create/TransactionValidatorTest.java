@@ -25,7 +25,6 @@ import static org.mockito.Mockito.*;
 
 //@SpringBootTest
 @ExtendWith(MockitoExtension.class)
-//@ExtendWith(SpringExtension.class)
 @DisplayName("TransactionValidator tests ")
 class TransactionValidatorTest {
 
