@@ -8,6 +8,8 @@ import java.util.Date;
 @Table(name="MONEY_MOVEMENT")
 public class MoneyMovement implements Serializable {
 
+
+
     public MoneyMovement() {
 
     }
@@ -162,5 +164,18 @@ public class MoneyMovement implements Serializable {
         public MoneyMovement build() {
             return new MoneyMovement(id, reference, iban, date, amount, fee, description);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "MoneyMovement{" +
+                "id=" + id +
+                ", reference='" + reference + '\'' +
+                ", iban='" + iban + '\'' +
+                ", date=" + date +
+                ", amount=" + amount +
+                ", fee=" + fee +
+                ", description='" + description + '\'' +
+                '}';
     }
 }
