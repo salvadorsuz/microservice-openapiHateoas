@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -27,7 +28,7 @@ class MoneyMovementRepositoryTest {
     private final String OTHER_REFERENCE= "AAA-222";
 
     @Autowired
-    private EntityManager entityManager;
+    private TestEntityManager entityManager;
 
     @Autowired
     private MoneyMovementRepository moneyMovementRepository;
